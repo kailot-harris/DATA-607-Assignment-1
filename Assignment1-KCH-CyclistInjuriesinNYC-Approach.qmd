@@ -1,0 +1,31 @@
+---
+title: "DATA607 - Assignment 1 - Approach"
+author: "Kailot C. Harris"
+format: html
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview and Introduction
+
+The selected data set is sourced from the City of New York's open data repository. The specific data set is named "Motor Vehicle Collisions - Crashes", and the complete data set comprises 2.27 million rows and 29 columns. Some variables are numerical (e.g. crash_time, latitude, longitude), while others are categorical (e.g. zip_code, borough, on_street_name). The data set can be accessed via this URL: <https://data.cityofnewyork.us/d/h9gi-nx95.>
+
+The original data set was restricted within the open data repository to only contain rows for which the variable number_of_cyclist_injured's numerical value is greater than 0. This step facilitated the successful download of a reasonably sized csv file, and also refined the scope of the data to focus primarily on incidents where at least 1 cyclist was reported injured.
+
+This data set was selected because it has potential relevance to MSDS students and faculty who travel via bicycle within the five boroughs. In addition, the initial filtering step reduced the file size by nearly an order of magnitude: from 2.27 million rows down to slightly over 66 thousand rows. Anticipated challenges in this assignment include accounting for confounding factors, such as weather events, and adequately visualizing the relationships between variables. Difficulties may arise when parsing incomplete data, such as those missing the variable "Vehicle_Type_Code_1".
+
+```{r approach-setup}
+library(tidyverse)   
+
+url <- "https://raw.githubusercontent.com/kailot-harris/DATA-607-Assignment-1/refs/heads/main/Motor_Vehicle_Collisions_-_Crashes_20260828.csv"  
+df <- read_csv(file = url,
+              show_col_types = FALSE,
+              progress = FALSE )
+
+#glimpse(df)}
+```
+
+The dataset initially appears to contain some data which may not be useful in further analysis. For instance, the variable "Location" is simply a concatenation of two other variables into a vector structure, namely placing the "Latitude" variable and "Longitude" variable into a coordinate pairing. The column "Location" is not independent of the other variables in this set, and can thus be safely removed from the refined set. Additionally, column (variable) names are not in snake_case, or any other friendly format, so one of the initial tasks will be to rename each column according to a convention.

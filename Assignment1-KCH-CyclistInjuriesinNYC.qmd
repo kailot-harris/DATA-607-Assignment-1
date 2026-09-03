@@ -1,5 +1,5 @@
 ---
-title: "DATA607 - Assignment 1: Investigating Cyclist Injuries in Motor Vehicle Collisions in New York City"
+title: "DATA607 - Assignment 1: Investigating Cyclist Injuries in Motor Vehicle Collisions in New York City - Codebase"
 author: "Kailot C. Harris"
 date: "2026-08-28"
 format: html
@@ -35,3 +35,67 @@ df <- read_csv(
 ```
 
 The dataset initially appears to contain some data which may not be useful in further analysis. For instance, the variable "Location" is simply a concatenation of two other variables into a vector structure, namely placing the "Latitude" variable and "Longitude" variable into a coordinate pairing. The column "Location" is not independent of the other variables in this set, and can thus be safely removed from the refined set. Additionally, column (variable) names are not in snake_case, or any other friendly format, so one of the initial tasks will be to rename each column according to a convention.
+
+## Task 1
+
+Take the data, and create one or more code blocks. You should finish with a data frame that contains a subset of the columns in your selected dataset. If there is an obvious target (aka predictor or independent) variable, you should include this in your set of columns. You should include (or add if necessary) meaningful column names and replace (if necessary) any non-intuitive abbreviations used in the data that you selected. For example, if you had instead been tasked with the UCI mushroom dataset, you would include the target column for edible or poisonous, and transform “e” values to “edible.” Your deliverable is the R code to perform these transformation tasks.
+
+```{r data-clean-up}
+library(janitor)
+
+#Remove the location column from data set
+df_2 <- df |>
+  select(!LOCATION)
+  
+#clean up the column names (variables)
+clean_df <- clean_names(df_2)
+
+#print variable names
+names(clean_df)
+
+#Observe new shape of data set
+head(clean_df,10)
+
+```
+
+## Exploratory Data Analysis
+
+First, the average location (latitude, longitude) will be calculated.
+
+```{r average-location}
+#Calculate average latitude and longitude for included collisions
+clean_df |>
+  summarize(avg_lat = mean(latitude, na.rm = TRUE),
+            avg_long = mean(longitude, na.rm = TRUE))
+
+```
+
+Next, several plots investigating accident counts will be displayed.
+
+```{r viz-counts}
+
+clean_df |>
+  ggplot(aes(x=number_of_cyclist_injured)) +
+  geom_histogram(binwidth = 1, position = "stack") +
+  labs(title = "Most Cyclist Injury Events Result in Only 1 Cyclist Injury", x = "Number of Injured Cyclists", y= "Count")
+```
+
+```{r viz-borough}
+clean_df |>
+  ggplot(aes(x=borough)) +
+  geom_bar(position = "stack") +
+  labs(title = "Accident History by Borough", x = "Borough", y= "Number of Cyclist Injury Events")
+```
+
+```{r plot-manhattan-zipcodes}
+
+bronx_df <- clean_df |>
+  filter(borough=="BRONX")
+
+bronx_df |>
+  ggplot(aes(x=zip_code)) +
+  geom_bar(position="Stack") +
+  labs(title = "Cyclist Injury Events Across the Bronx's Zip-Codes", x = "Zip Code within the Bronx", y = "Number of Cyclist Injury Events")
+
+
+```
