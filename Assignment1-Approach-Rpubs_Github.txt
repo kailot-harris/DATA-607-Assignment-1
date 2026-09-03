@@ -1,0 +1,3 @@
+http://rpubs.com/kailot_harris/DATA607-A1-Approach
+
+https://github.com/kailot-harris/DATA-607-Assignment-1/blob/main/Assignment1-KCH-CyclistInjuriesinNYC-Approach.qmd
