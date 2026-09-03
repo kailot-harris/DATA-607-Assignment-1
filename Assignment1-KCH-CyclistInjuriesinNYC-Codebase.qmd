@@ -8,6 +8,10 @@ editor: visual
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+#| echo: true
+#| message: false
+#| warning: false
 ```
 
 ## Overview and Introduction
@@ -18,9 +22,12 @@ The original data set was restricted within the open data repository to only con
 
 This data set was selected because it has potential relevance to MSDS students and faculty who travel via bicycle within the five boroughs. In addition, the initial filtering step reduced the file size by nearly an order of magnitude: from 2.27 million rows down to slightly over 66 thousand rows. Anticipated challenges in this assignment include accounting for confounding factors, such as weather events, and adequately visualizing the relationships between variables. Difficulties may arise when parsing incomplete data, such as those missing the variable "Vehicle_Type_Code_1".
 
-```{r}
-library(tidyverse)
+```{r import}
+#| echo: true
+#| message: false
+#| warning: false
 
+library(tidyverse)
 
 url <- "https://raw.githubusercontent.com/kailot-harris/DATA-607-Assignment-1/refs/heads/main/Motor_Vehicle_Collisions_-_Crashes_20260828.csv"
 
@@ -41,20 +48,31 @@ The dataset initially appears to contain some data which may not be useful in fu
 Take the data, and create one or more code blocks. You should finish with a data frame that contains a subset of the columns in your selected dataset. If there is an obvious target (aka predictor or independent) variable, you should include this in your set of columns. You should include (or add if necessary) meaningful column names and replace (if necessary) any non-intuitive abbreviations used in the data that you selected. For example, if you had instead been tasked with the UCI mushroom dataset, you would include the target column for edible or poisonous, and transform “e” values to “edible.” Your deliverable is the R code to perform these transformation tasks.
 
 ```{r data-clean-up}
+#| echo: true
+#| message: false
+#| warning: false
+
 library(janitor)
 
-#Remove the location column from data set
-df_2 <- df |>
-  select(!LOCATION)
-  
 #clean up the column names (variables)
-clean_df <- clean_names(df_2)
+clean_df <- clean_names(df)
 
+#Remove the location column from data set
+df_2 <- clean_df |>
+  select(crash_date, 
+         crash_time, 
+         borough, 
+         zip_code, 
+         latitude, 
+         longitude,
+         number_of_cyclist_injured, vehicle_type_code_1,
+         contributing_factor_vehicle_1)
+  
 #print variable names
-names(clean_df)
+names(df_2)
 
 #Observe new shape of data set
-head(clean_df,10)
+head(df_2,10)
 
 ```
 
@@ -64,7 +82,16 @@ First, the average location (latitude, longitude) will be calculated.
 
 ```{r average-location}
 #Calculate average latitude and longitude for included collisions
-clean_df |>
+df_2 |>
+  summarize(avg_lat = mean(latitude, na.rm = TRUE),
+            avg_long = mean(longitude, na.rm = TRUE))
+## mean values are not within NYC.... some data must be input as 0 instead of NA...
+
+
+## filter only latitudes and longitudes within NYC boundaries
+df_2 |>
+  filter(latitude > 40.49 & latitude < 40.92, 
+         longitude > -74.26 & longitude < -73.70) |>
   summarize(avg_lat = mean(latitude, na.rm = TRUE),
             avg_long = mean(longitude, na.rm = TRUE))
 
@@ -74,39 +101,43 @@ Next, several plots investigating accident counts will be displayed.
 
 ```{r viz-counts}
 
-clean_df |>
+df_2 |>
   ggplot(aes(x=number_of_cyclist_injured)) +
   geom_histogram(binwidth = 1, position = "stack") +
-  labs(title = "Most Cyclist Injury Events Result in Only 1 Cyclist Injury", x = "Number of Injured Cyclists", y= "Count")
+  labs(title = "Most Cyclist Injury Events Result in Only 1 Cyclist Injury", 
+       x = "Number of Injured Cyclists", 
+       y= "Count") +
+  theme_minimal()
 ```
 
 ```{r viz-borough}
-clean_df |>
+df_2 |>
   ggplot(aes(x=borough)) +
   geom_bar(position = "stack") +
-  labs(title = "Accident History by Borough", x = "Borough", y= "Number of Cyclist Injury Events")
+  labs(title = "Accident History by Borough", 
+       x = "Borough", 
+       y= "Number of Cyclist Injury Events") +
+  theme_minimal()
 ```
 
-```{r plot-manhattan-zipcodes}
+```{r plot-bronx-zipcodes}
 
-bronx_df <- clean_df |>
-  filter(borough=="BRONX")
+bronx_df <- df_2 |>
+  filter(borough=="BRONX", !is.na(zip_code))
 
 bronx_df |>
-  ggplot(aes(x=factor(zip_code))) +
+  ggplot(aes(y=factor(zip_code))) +
   geom_bar(position="Stack") +
-  labs(title = "Cyclist Injury Events Across the Bronx's Zip-Codes", x = "Zip Code within the Bronx", y = "Number of Cyclist Injury Events")
+  labs(title = "Cyclist Injury Events Across the Bronx's Zip-Codes", 
+       x = "Number of Cyclist Injury Events", 
+       y = "Zip Code within the Bronx") + 
+  theme_minimal()
 
 
-```
-
-```{r}
-brooklyn_df <- clean_df |>
-  filter(borough=="BROOKLYN")
-
-brooklyn_df |>  ggplot(aes(x=factor(zip_code))) +
-  geom_bar(position="Stack") +
-  labs(title = "Cyclist Injury Events Across Brooklyn's Zip-Codes", x = "Zip Code within Brooklyn", y = "Number of Cyclist Injury Events")
 ```
 
 ### Findings and Recommendations
+
+In order to visualize the data in figures, the data set was first cleaned up by removing unnecessary columns and renaming the columns to match a standardized convention. From there, the frequency of single- or multiple-cyclist injury events was plotted, and it was determined that most frequently only a single cyclist is injured in a cyclist injury event. In addition, the distribution of cyclist injury events across the five boroughs was mapped, and a new data issue was determined: missing data (NA values) represented the third most frequent borough! The number of missing boroughs exceeded the total number of events from Staten Island, Queens, and the Bronx, individually. The data provided for the Bronx was dis-aggregated by zip code, and 10451 represented the Bronx zip-code with the most cyclist injury events, exceeding 400 total events.\
+
+Future improvements to this analysis could include analysis of time-of-day as a factor in cyclist injury frequency. Additionally, the entire data set could be visually mapped onto a geographic representation of the city using the latitude and longitude of each event. This type of visualization could help an observer determine locations with high frequencies of cyclist injury events, which could be useful in city planning endeavors.
